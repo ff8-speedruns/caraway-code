@@ -23,3 +23,13 @@ body > .container {
 label {
   margin-right: 10px;
 }
+
+.red {
+  color: red;
+}
+.yellow {
+  color: gold;
+}
+.green {
+  color: green;
+}

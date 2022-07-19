@@ -19,164 +19,17 @@ function ArrayCompare(a, b) {
 
 
 let option = {
-  // 探索の基準とするindex　RTAで無駄がないと350付近らしい
   defaultStartIndex: 350,
-
-  // Base+カード戦オフセットを中央として、これだけの幅を探索
   searchWidth: 600,
-
-  // 検索順 反転:reverse, 降順:ascending, 昇順:descending, 通常:それ以外
   searchOrder: "reverse",
-
-  // キスカ1ツモ固定かつゼルカなし(カード戦闘数の入力を飛ばす)
   beginningQuistisCardOnly: false,
-
-  // 直前にハードリセットを行う(カード戦闘数の入力を飛ばす)…探索する意味ねえ
   hardwareReset: false,
-
-  // 乱数の消費数が3であるカード戦闘数の範囲(てきとう)
   cardSucc3Range: [1, 2, 3, 4],
-
-  // 電柱のセット数上限
   polesArrSize: 6,
   debug: false,
   language: "ja"
 };
 
-/*
-// ハードリセットを行うと乱数のインデックスが初期化される
-if (option.hardwareReset) option.defaultStartIndex = 8;
-
-// STDIN.getch用
-require("io/console");
-
-// ワイルドカードを表すTrueClass的なクラス
-class WildCardClass {
-  get toS() {
-    return "*"
-  };
-
-  get inspect() {
-    return "*"
-  }
-};
-
-const WildCard = new WildCardClass;
-
-const NPC_Station_Table = { "1": "none", "2": "walk" };
-
-const NPC_Escalator_Table = {
-  "1": "both",
-  "2": "boy",
-  "3": "girl",
-  "4": "none"
-};
-
-const NPC_Street_Table = { "1": "walk", "2": "none", "3": "stillWalk" };
-
-const NPC_Bus_Table = {
-  "1": "none",
-  "2": "appear",
-  "3": "stop",
-  "4": "leave"
-};
-
-// Basically, the number of Kisuka Zelka battles is required
-if (ARGV.size < (option.hardwareReset || option.beginningQuistisCardOnly ? 1 : 3)) {
-  console.log(`Usage: ${File.basename(__FILE__, ".*")} Qcard Zcard [poles+] [NPCs]
-  Qcard number of battles
-  Zcard number of battles
-  poles The number of utility poles that can be seen through the window at the back of the train (every few seconds)
-  NPCs A string consisting of the following values
-    station NPC at the bottom right of Delling City Station
-  \t\t${NPC_Station_Table.map((k, v) => (
-    k + JSON.stringify(v)
-  )).join(", ")}
-    escalator NPC at the bottom right of the escalator
-  \t\t${NPC_Escalator_Table.map((k, v) => (
-    k + JSON.stringify(v)
-  )).join(", ")}
-    street\t NPCs on the road
-  \t\t${NPC_Street_Table.map((k, v) => (
-    k + JSON.stringify(v)
-  )).join(", ")}
-    bus\t\t NPC in the lower left in front of the Carway House
-  \t\t${NPC_Bus_Table.map((k, v) => (
-    k + JSON.stringify(v)
-  )).join(", ")}
-    If you specify a character other than 0 to 9 (such as "-") for the value of poles ~ bus, any pattern will be matched.
-    * "*" Cannot be used because it will be wildcard expanded before Ruby receives it.
-  Press any key to continue...
-  `);
-
-  STDIN.getch();
-
-  console.log(`e.g.
-  ・rnd[353]: code:"178"
-    Qcard:1, Zcard:0, poles:[1, 10, 3, 7]
-    train:walk, escalator:both, street:walk, bus:leave
-      ${File.basename(
-    __FILE__,
-    ".*"
-  )} 1 0 1 10 3 7 2114
-    ・If you miss something, replace it with "-".
-    If you miss the second set of utility poles and the bus NPC：
-        ${File.basename(
-    __FILE__,
-    ".*"
-  )} 1 0 1 - 3 7 211-
-    ・poles+ Only or NPCs only can be specified：
-        ${File.basename(
-    __FILE__,
-    ".*"
-  )} 1 0 1 10 3 7
-        ${File.basename(__FILE__, ".*")} 1 0 2114
-  ・rnd[351]: code:"139"
-    Qcard:1, Zcard:0, poles:[15, 6, 1, ?],
-    train:none, escalator:both, street:walk, bus:stop
-    Enter "-" because the 4th set of utility poles cannot be confirmed to the end:
-      ${File.basename(
-    __FILE__,
-    ".*"
-  )} 1 0 15 6 1 - 1113
-  `);
-
-  let exit
-};
-
-if (option.debug) console.log(`option\t${option}`);
-if (option.debug) console.log(`ARGV\t${ARGV}`);
-
-function strArr2polesArr(strArr) {
-  let r = strArr.slice(
-    strArr.length - option.polesArrSize,
-    strArr.length
-  ).map(s => /^\d+\Z/.test(s) ? parseInt(s) : WildCard);
-
-  return [WildCard] * (option.polesArrSize - r.size) + r
-};
-
-function str2npcVal(str, hash) {
-  let h = hash.clone;
-  h.default = WildCard;
-  return h[str]
-};
-
-// If the string length of the last argument is 4 or more, the last argument is regarded as NPC specification.
-let delingNpcs = ARGV[ARGV.length - 1].size < 4 ? "----" : ARGV.pop;
-
-let args_for_search = {
-  quistisCard: option.hardwareReset ? 0 : option.beginningQuistisCardOnly ? 1 : parseInt(ARGV.shift),
-  zellCard: option.hardwareReset || option.beginningQuistisCardOnly ? 0 : parseInt(ARGV.shift),
-  polesArr: strArr2polesArr(ARGV.slice(0)),
-  station: str2npcVal(delingNpcs[0], NPC_Station_Table),
-  escalator: str2npcVal(delingNpcs[1], NPC_Escalator_Table),
-  street: str2npcVal(delingNpcs[2], NPC_Street_Table),
-  bus: str2npcVal(delingNpcs[3], NPC_Bus_Table)
-};
-*/
-
-// below is done
 class RNG {
   Initial_State = 0x00000001;
 
@@ -359,10 +212,10 @@ function makeCarawayCodeTable(from, to) {
       let [up, down, asIs, open, close] = ["↑", "↓", "-", "[", "]"];
 
       let n = parseInt(c);
-      if (n == 0) return `${c}${open}${asIs}${close}`;
+      if (n == 0) return `${open}${asIs}${close}`;
       let direction = n <= 5 ? down : up;
       let count = n <= 5 ? n : 10 - n;
-      return `${c}${open}${direction}${count}${close}`
+      return `${open}${direction}${count}${close}`
     }).join(", ");
 
     // RNG State - converted to hex format
@@ -390,127 +243,6 @@ function makeCarawayCodeTable(from, to) {
 
   return table;
 };
-/*
-function carawayCodeMatch(pattern, codeData) {
-  let target = [
-    ...codeData.polesArr,
-    codeData.station,
-    codeData.escalator,
-    codeData.street,
-    codeData.bus
-  ];
-
-  let matchp = pattern.zip(target).every((a, b) => {
-    if (b == null) {
-      return false
-    } else if (a == WildCard) {
-      return true
-    } else {
-      return a == b
-    }
-  });
-
-  if (matchp || option.debug) {
-    let rngState = option.debug ? `${codeData.rngState}→` : "";
-
-    console.log("%s\t[%03d] %s%03d→\"%s\" %s" % [
-      matchp ? "*match*" : "",
-      codeData.index,
-      rngState,
-      codeData.source,
-      codeData.code,
-      target
-    ])
-  };
-
-  return matchp
-};
-
-// Search for the number of the Carway House
-function searchCarawayCode({ quistisCard = 1, zellCard = 0, polesArr = [], station = "none", escalator = "none", street = "none", bus = "none" } = {}) {
-  // Card battle n-1st time: +3, nth time and after: +6 (actually, it shakes up and down more than this)
-  function card2offset(battles) {
-    return (1).upto(battles).map(n => option.cardSucc3Range.includes(n) ? 3 : 6).inject("+") || 0
-  };
-
-  // Kistis card offset
-  let quistisCardOffset = card2offset(quistisCard);
-
-  // Zelcard offset
-  let zellCardOffset = card2offset(zellCard);
-
-  // Search start point
-  let startIndex = option.defaultStartIndex + quistisCardOffset + zellCardOffset;
-
-  // Search pattern
-  let pattern = [...polesArr, station, escalator, street, bus];
-  console.log(`pattern = ${pattern}`);
-
-  // Search order (array of indexes)
-  let order = ([startIndex] + (1).upto(option.searchWidth / 2).map(offset => (
-    [startIndex + offset, startIndex - offset]
-  ))).flat(Infinity).filter(idx => idx >= 0);
-
-  switch (option.searchOrder) {
-    case "reverse":
-      order.reverse;
-      break;
-
-    case "ascending":
-      order.sort;
-      break;
-
-    case "descending":
-      order.sort.reverse
-  };
-
-  // Build as many tables as you need
-  let codeTable = makeCarawayCodeTable(order.min, order.max);
-
-  return order.map((idx) => {
-    let codeData = codeTable[idx];
-
-    if (carawayCodeMatch(pattern, codeData)) {
-      return { diff: idx - startIndex, index: idx, codeData }
-    }
-  }).compact
-};
-
-function main() {
-  console.log(`Quistis card\t${args_for_search.quistisCard} battle(s)
-  Zell card\t${args_for_search.zellCard} battle(s)
-  poles count\t${args_for_search.polesArr}
-  station NPC\t${JSON.stringify(args_for_search.station)}
-  ecalator NPC\t${JSON.stringify(args_for_search.escalator)}
-  street NPC\t${JSON.stringify(args_for_search.street)}
-  bus NPC\t\t${JSON.stringify(args_for_search.bus)}
-  
-  `);
-  let r = searchCarawayCode(args_for_search);
-  console.log(`${r.length == 0 ? "not" : r.size} found.`);
-  if (r.length == 0) return;
-  console.log("");
-
-  // Index closest to the starting point
-  let nearestIndex = r.minBy(v => Math.abs(v.diff)).index;
-  console.log("diff\tindex\tcode\tinput");
-
-  for (let v of r) {
-    let [diff, idx, codeData] = v.values;
-    let nearestp = idx == nearestIndex;
-    let idxStr = (nearestp ? "*[%03d]*" : "[%03d]") % [idx];
-
-    console.log("%+4d\t%s\t\"%s\"\t%s" % [
-      diff,
-      idxStr,
-      codeData.code,
-      codeData.input
-    ])
-  }
-};
-
-
-*/
 
 let orderArr = Array.from({ length: option.searchWidth / 2 }, (val, idx) => idx);
 
@@ -534,7 +266,9 @@ console.log(codes);
 
 // !
 document.addEventListener("change", () => {
-  console.log(FindCode());
+  let results = FindCode();
+  console.log(results);
+  PrintResults(results)
 });
 
 
@@ -579,35 +313,16 @@ function FindCode() {
 
   for (let i = 1; i <= option.polesArrSize; i++) {
     let val = document.getElementById(`cara-${i}`).value;
+
     if (val != "null")
       searchArr.push(val);
   }
 
   let pat = searchArr.join("");
-
   let exp = new RegExp(pat + "$");
 
-  console.log(pat);
-
-
-  let filteredArray = codes.filter(entry => {
-
-    let good = true;
-
-    if (one != null && entry.poles[0] != one)
-      good = false;
-    if (two != null && entry.poles[1] != two)
-      good = false;
-    if (three != null && entry.poles[2] != three)
-      good = false;
-    if (four != null && entry.poles[3] != four)
-      good = false;
-    if (five != null && entry.poles[4] != five)
-      good = false;
-
-    return good;
-
-  });
+  // Search for the entered poles!
+  let filteredArray = codes.filter(entry => exp.test(entry.polesHex));
 
   return filteredArray;
 }
@@ -615,4 +330,68 @@ function FindCode() {
 function GetSelectValueInt(id) {
   let val = parseInt();
   return isNaN(val) ? null : val;
+}
+
+function ClearResults() {
+  document.getElementById('results').innerHTML = '';
+}
+
+function PrintResults(resultsArray) {
+  let results = document.getElementById('results');
+  ClearResults();
+  resultsArray.forEach(entry => {
+    let result = CreateResult(entry);
+    results.appendChild(result);
+  });
+}
+
+function CreateResult(el) {
+  console.log(el);
+  let container = document.createElement("div");
+  container.classList.add('my-3', 'container', 'text-center');
+
+  let mainCode = document.createElement("div"),
+  backupCode = document.createElement("div"),
+  firstRow = document.createElement("div"),
+  index = document.createElement("div"),
+  poles = document.createElement("div"),
+  station = document.createElement("div"),
+  secondRow = document.createElement("div"),
+  escalator = document.createElement("div"),
+  bus = document.createElement("div"),
+  street = document.createElement("div");
+  
+  mainCode.classList.add('col', 'display-2');
+  backupCode.classList.add('col', 'display-6');
+  firstRow.classList.add('row');
+  index.classList.add('col');
+  poles.classList.add('col');
+  station.classList.add('col');
+  secondRow.classList.add('row');
+  escalator.classList.add('col');
+  bus.classList.add('col');
+  street.classList.add('col');
+
+  mainCode.innerHTML = el.code;
+  backupCode.innerHTML = "Inputs<br/>" + el.input;
+  index.innerHTML = "Idx<br />" + el.index;
+  poles.innerHTML = "Poles<br />" + el.poles.toString();
+  station.innerHTML = "Station<br />" + el.station;
+  escalator.innerHTML = "Escalator<br />" + el.escalator;
+  bus.innerHTML = "Bus<br />" + el.bus;
+  street.innerHTML = "Street<br />" + el.street;
+
+  firstRow.appendChild(index);
+  firstRow.appendChild(poles);
+  firstRow.appendChild(station);
+  secondRow.appendChild(escalator);
+  secondRow.appendChild(bus);
+  secondRow.appendChild(street);
+
+  container.appendChild(mainCode);
+  container.appendChild(backupCode);
+  container.appendChild(firstRow);
+  container.appendChild(secondRow);
+
+  return container;
 }
