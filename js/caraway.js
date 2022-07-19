@@ -23,7 +23,7 @@ let option = {
   defaultStartIndex: 350,
 
   // Base+カード戦オフセットを中央として、これだけの幅を探索
-  searchWidth: 300,
+  searchWidth: 600,
 
   // 検索順 反転:reverse, 降順:ascending, 昇順:descending, 通常:それ以外
   searchOrder: "reverse",
@@ -38,7 +38,7 @@ let option = {
   cardSucc3Range: [1, 2, 3, 4],
 
   // 電柱のセット数上限
-  polesArrSize: 5,
+  polesArrSize: 6,
   debug: false,
   language: "ja"
 };
@@ -270,6 +270,8 @@ function makeCarawayCodeTable(from, to) {
       idx - 4 + 1
     ).map(v => v % 16);
 
+    let polesHex = polesArr.map(num => num.toString(16)).join('');
+
     let bus, street, escalator, station = null;
 
     // Station NPC
@@ -363,12 +365,12 @@ function makeCarawayCodeTable(from, to) {
       return `${c}${open}${direction}${count}${close}`
     }).join(", ");
 
-// RNG State - converted to hex format
-    let hexRngState = rngStateArr[idx].toString(16);
+    // RNG State - converted to hex format
+    let hexRngState = rngStateArr[idx].toString(16).padStart(8, '0');
 
-    
-    if(idx == 445 || idx == 446 || idx == 447 || idx == 448 || idx == 449 || idx == 450 )
-      console.log(idx, hexRngState, code, codeInput, polesArr,station, escalator, street, bus);
+
+    if (idx == 445 || idx == 446 || idx == 447 || idx == 448 || idx == 449 || idx == 450)
+      console.log(idx, hexRngState, code, codeInput, polesArr, station, escalator, street, bus);
 
     // Put it all together
     return {
@@ -377,6 +379,7 @@ function makeCarawayCodeTable(from, to) {
       source: source,
       code: code,
       poles: polesArr,
+      polesHex: polesHex,
       station: station,
       escalator: escalator,
       street: street,
@@ -506,17 +509,110 @@ function main() {
   }
 };
 
-main()
+
 */
 
 let orderArr = Array.from({ length: option.searchWidth / 2 }, (val, idx) => idx);
+
 let order = orderArr.map(offset => (
-  [ option.defaultStartIndex + offset,  option.defaultStartIndex - offset]
+  [option.defaultStartIndex + offset, option.defaultStartIndex - offset]
 )).flat().filter(idx => idx >= 0);
+
 // Unique values only, please.
 order = [...new Set(order)];
 
 let min = Math.min(...order);
 let max = Math.max(...order);
 
-console.log(makeCarawayCodeTable(min, max))
+// Generate table; remove null values.
+const codes = makeCarawayCodeTable(min, max).filter(idx => idx != null);
+
+// Create the select lists
+GenerateLists(option.polesArrSize);
+
+console.log(codes);
+
+// !
+document.addEventListener("change", () => {
+  console.log(FindCode());
+});
+
+
+// Create the select lists on the page.
+function GenerateLists(num) {
+  let lists = document.getElementById("lists");
+
+  for (let i = 1; i <= num; i++) {
+    // Column
+    let div = document.createElement("div");
+    div.classList.add('col');
+
+    // Dropdown
+    let list = document.createElement("select");
+    list.classList.add('form-select', 'form-select-lg', 'mb-3');
+    list.id = `cara-${i}`;
+
+    // Options
+    for (let j = 0; j <= 17; j++) {
+      let opt = document.createElement('option');
+      if (j == 0) {
+        opt.value = null;
+        opt.innerHTML = '';
+      } else if (j == 1) {
+        opt.value = '.';
+        opt.innerHTML = '?';
+      } else {
+        opt.value = (j - 2).toString(16);
+        opt.innerHTML = j - 2;
+      }
+      list.appendChild(opt);
+    }
+
+    div.appendChild(list);
+    lists.appendChild(div);
+  }
+}
+
+function FindCode() {
+
+  let searchArr = [];
+
+  for (let i = 1; i <= option.polesArrSize; i++) {
+    let val = document.getElementById(`cara-${i}`).value;
+    if (val != "null")
+      searchArr.push(val);
+  }
+
+  let pat = searchArr.join("");
+
+  let exp = new RegExp(pat + "$");
+
+  console.log(pat);
+
+
+  let filteredArray = codes.filter(entry => {
+
+    let good = true;
+
+    if (one != null && entry.poles[0] != one)
+      good = false;
+    if (two != null && entry.poles[1] != two)
+      good = false;
+    if (three != null && entry.poles[2] != three)
+      good = false;
+    if (four != null && entry.poles[3] != four)
+      good = false;
+    if (five != null && entry.poles[4] != five)
+      good = false;
+
+    return good;
+
+  });
+
+  return filteredArray;
+}
+
+function GetSelectValueInt(id) {
+  let val = parseInt();
+  return isNaN(val) ? null : val;
+}
