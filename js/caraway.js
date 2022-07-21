@@ -21,13 +21,7 @@ function ArrayCompare(a, b) {
 let option = {
   defaultStartIndex: 350,
   searchWidth: 600,
-  searchOrder: "reverse",
-  beginningQuistisCardOnly: false,
-  hardwareReset: false,
-  cardSucc3Range: [1, 2, 3, 4],
-  polesArrSize: 6,
-  debug: false,
-  language: "ja"
+  polesArrSize: 6
 };
 
 class RNG {
@@ -130,9 +124,9 @@ function makeCarawayCodeTable(from, to) {
     // Station NPC
     if (idx - 3 >= 0) {
       if (sourceArr[idx - 3] >= 100) {
-        station = "none"
+        station = "None"
       } else {
-        station = "walk";
+        station = "Walk";
       }
     }
 
@@ -140,15 +134,15 @@ function makeCarawayCodeTable(from, to) {
     if (idx - 2 >= 0) {
       if (sourceArr[idx - 2] >= 150) {
         if (sourceArr[idx - 1] >= 150) {
-          escalator = "none"
+          escalator = "None"
         } else {
-          escalator = "boy"
+          escalator = "Boy"
         }
       } else {
         if (sourceArr[idx - 1] >= 150) {
-          escalator = "girl"
+          escalator = "Girl"
         } else {
-          escalator = "both"
+          escalator = "Boy + Girl"
         }
       }
     }
@@ -157,15 +151,15 @@ function makeCarawayCodeTable(from, to) {
     if (sourceArr[idx + 1] >= 120) {
       if (sourceArr[idx + 1] >= 200) {
         if (sourceArr[idx + 3] >= 130) {
-          street = "stillWalk"
+          street = "Still->Walk"
         } else {
-          street = "none"
+          street = "None"
         }
       } else {
-        street = "none"
+        street = "None"
       }
     } else {
-      street = "walk";
+      street = "Walk";
     }
 
     // Bus NPC
@@ -173,37 +167,37 @@ function makeCarawayCodeTable(from, to) {
       if (sourceArr[idx + 6] < 200) {
         if (sourceArr[idx + 4] >= 100) {
           if (sourceArr[idx + 5] >= 100) {
-            bus = "appear";
+            bus = "Spawn";
           } else {
-            bus = "stop";
+            bus = "Stop";
           };
         } else {
           if (sourceArr[idx + 5] >= 100) {
-            bus = "stop";
+            bus = "Stop";
           } else {
-            bus = "leave";
+            bus = "Leave";
           };
         };
       } else {
-        bus = "none";
+        bus = "None";
       };
     } else {
       if (sourceArr[idx + 4] < 200) {
         if (sourceArr[idx + 2] >= 100) {
           if (sourceArr[idx + 3] >= 100) {
-            bus = "appear";
+            bus = "Spawn";
           } else {
-            bus = "stop";
+            bus = "Stop";
           };
         } else {
           if (sourceArr[idx + 3] >= 100) {
-            bus = "stop";
+            bus = "Stop";
           } else {
-            bus = "leave";
+            bus = "Leave";
           };
         };
       } else {
-        bus = "none";
+        bus = "None";
       };
     }
 
@@ -215,7 +209,7 @@ function makeCarawayCodeTable(from, to) {
       if (n == 0) return `${open}${asIs}${close}`;
       let direction = n <= 5 ? down : up;
       let count = n <= 5 ? n : 10 - n;
-      return `${open}${direction}${count}${close}`
+      return `${direction}${count}`
     }).join(", ");
 
     // RNG State - converted to hex format
@@ -264,7 +258,7 @@ GenerateLists(option.polesArrSize);
 
 console.log(codes);
 
-// !
+// Do the search and UI update
 document.addEventListener("change", () => {
   let results = FindCode();
   console.log(results);
@@ -279,7 +273,7 @@ function GenerateLists(num) {
   for (let i = 1; i <= num; i++) {
     // Column
     let div = document.createElement("div");
-    div.classList.add('col');
+    div.classList.add('col-lg-2', 'col-sm-4');
 
     // Dropdown
     let list = document.createElement("select");
@@ -291,7 +285,7 @@ function GenerateLists(num) {
       let opt = document.createElement('option');
       if (j == 0) {
         opt.value = null;
-        opt.innerHTML = '';
+        opt.innerHTML = `Pole ${i}`;
       } else if (j == 1) {
         opt.value = '.';
         opt.innerHTML = '?';
@@ -323,6 +317,10 @@ function FindCode() {
 
   // Search for the entered poles!
   let filteredArray = codes.filter(entry => exp.test(entry.polesHex));
+  let backupArray = [];
+  filteredArray.map(entry => {
+    entry.backup = codes.find(code => code.index == entry.index + 2);
+  })
 
   return filteredArray;
 }
@@ -351,47 +349,47 @@ function CreateResult(el) {
   container.classList.add('my-3', 'container', 'text-center');
 
   let mainCode = document.createElement("div"),
-  backupCode = document.createElement("div"),
-  firstRow = document.createElement("div"),
-  index = document.createElement("div"),
-  poles = document.createElement("div"),
-  station = document.createElement("div"),
-  secondRow = document.createElement("div"),
-  escalator = document.createElement("div"),
-  bus = document.createElement("div"),
-  street = document.createElement("div");
-  
+    backupCode = document.createElement("div"),
+    firstRow = document.createElement("div"),
+    station = document.createElement("div"),
+    escalator = document.createElement("div"),
+    street = document.createElement("div"),
+    bus = document.createElement("div"),
+    secondRow = document.createElement("div"),
+    backup = document.createElement("div"),
+    separator = document.createElement("hr");
+
   mainCode.classList.add('col', 'display-2');
   backupCode.classList.add('col', 'display-6');
   firstRow.classList.add('row');
-  index.classList.add('col');
-  poles.classList.add('col');
   station.classList.add('col');
-  secondRow.classList.add('row');
   escalator.classList.add('col');
-  bus.classList.add('col');
   street.classList.add('col');
+  bus.classList.add('col');
+  separator.classList.add('border', 'border-dark', 'border-2', 'w-25', 'mx-auto');
+  
+  secondRow.classList.add('row');
+  backup.classList.add('col');
 
   mainCode.innerHTML = el.code;
-  backupCode.innerHTML = "Inputs<br/>" + el.input;
-  index.innerHTML = "Idx<br />" + el.index;
-  poles.innerHTML = "Poles<br />" + el.poles.toString();
+  backupCode.innerHTML = `<span class="badge rounded-pill text-bg-info">${el.input}</span>`;
   station.innerHTML = "Station<br />" + el.station;
   escalator.innerHTML = "Escalator<br />" + el.escalator;
-  bus.innerHTML = "Bus<br />" + el.bus;
   street.innerHTML = "Street<br />" + el.street;
+  bus.innerHTML = "Bus<br />" + el.bus;
+  backup.innerHTML = (el.backup) ? `Backup<br />${el.backup.code} <span class="badge rounded-pill text-bg-info">${el.backup.input}</span>` : '';
 
-  firstRow.appendChild(index);
-  firstRow.appendChild(poles);
   firstRow.appendChild(station);
-  secondRow.appendChild(escalator);
-  secondRow.appendChild(bus);
-  secondRow.appendChild(street);
+  firstRow.appendChild(escalator);
+  firstRow.appendChild(street);
+  firstRow.appendChild(bus);
+  secondRow.appendChild(backup);
 
   container.appendChild(mainCode);
   container.appendChild(backupCode);
   container.appendChild(firstRow);
   container.appendChild(secondRow);
+  container.appendChild(separator);
 
   return container;
 }
