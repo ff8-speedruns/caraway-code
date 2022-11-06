@@ -255,11 +255,13 @@ const codes = makeCarawayCodeTable(min, max).filter(idx => idx != null);
 
 // Create the select lists
 GenerateLists(option.polesArrSize);
+GenerateListReferenceDivs(option.polesArrSize);
 
 console.log(codes);
 
 // Do the search and UI update
 document.addEventListener("change", () => {
+  UpdateReferences();
   let results = FindCode();
   console.log(results);
   PrintResults(results)
@@ -277,28 +279,53 @@ function GenerateLists(num) {
 
     // Dropdown
     let list = document.createElement("select");
-    list.classList.add('form-select', 'form-select-lg', 'mb-3');
+    list.classList.add('form-select', 'form-select-lg', 'mb-3', 'poles-list');
     list.id = `cara-${i}`;
 
     // Options
-    for (let j = 0; j <= 17; j++) {
+    for (let j = 0; j <= 16; j++) {
       let opt = document.createElement('option');
       if (j == 0) {
         opt.value = null;
         opt.innerHTML = `Pole ${i}`;
-      } else if (j == 1) {
-        opt.value = '.';
-        opt.innerHTML = '?';
       } else {
-        opt.value = (j - 2).toString(16);
-        opt.innerHTML = j - 2;
+        opt.value = (j - 1).toString(16);
+        opt.innerHTML = j - 1;
       }
       list.appendChild(opt);
     }
 
+    // Add ?
+    let opt = document.createElement('option');
+    opt.value = '.';
+    opt.innerHTML = '?';
+    list.appendChild(opt);
+
+
     div.appendChild(list);
     lists.appendChild(div);
   }
+}
+
+function GenerateListReferenceDivs(num) {
+  let lists = document.getElementById("list-references");
+
+  for (let i = 1; i <= num; i++) {
+    // Column
+    let div = document.createElement("div");
+    div.classList.add('col', 'text-center');
+    div.id = `cara-${i}-ref`;
+    div.innerHTML = `-`;
+    lists.appendChild(div);
+  }
+}
+
+function UpdateReferences() {
+  var elems = document.querySelectorAll(".poles-list");
+
+  [].forEach.call(elems, function (el) {
+    document.getElementById(`${el.id}-ref`).innerHTML = el.options[el.selectedIndex].text
+  });
 }
 
 function FindCode() {
@@ -367,7 +394,7 @@ function CreateResult(el) {
   street.classList.add('col');
   bus.classList.add('col');
   separator.classList.add('border', 'border-dark', 'border-2', 'w-25', 'mx-auto');
-  
+
   secondRow.classList.add('row');
   backup.classList.add('col');
 
@@ -393,3 +420,5 @@ function CreateResult(el) {
 
   return container;
 }
+
+UpdateReferences();

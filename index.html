@@ -17,6 +17,7 @@
 		integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<link href="./css/styles.css" rel="stylesheet">
+	<link href="./css/dpad.css" rel="stylesheet">
 
 </head>
 
@@ -37,7 +38,17 @@
 		<div class="col mt-5 align-self-center">
 			<div class="row g-3 justify-content-center">
 				<div class="col-sm-12 col-lg-6">
-					<div class="my-5 row" id="lists">
+					<div class="my-5 row d-none d-md-flex" id="lists">
+					</div>
+					<div class="my-5 row d-md-none" id="list-references">
+					</div>
+					<div class="set d-md-none">
+						<nav class="d-pad">
+							<a id="up" class="dpad up" href="#"></a>
+							<a id="right" class="dpad right" href="#"></a>
+							<a id="down" class="dpad down" href="#"></a>
+							<a id="left" class="dpad left" href="#"></a>
+						</nav>
 					</div>
 					<div id="results" class="text-center">
 					</div>
@@ -108,6 +119,7 @@
 		integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
 		crossorigin="anonymous"></script>
 	<script src="./js/caraway.js"></script>
+	<script src="./js/dpad.js"></script>
 </body>
 
 </html>
