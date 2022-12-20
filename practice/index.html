@@ -17,6 +17,11 @@
 		integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<link href="./practice.css" rel="stylesheet">
+	<style>
+		video {
+			max-width: 100%;
+		}
+	</style>
 </head>
 
 <body>
@@ -25,7 +30,6 @@
 		<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
 			<div class="container">
 				<a class="navbar-brand" href="#">FF8 Pole Counting Practice</a>
-				<a href="../" class="btn btn-success">Pole Calculator</a>
 				<a href="../../" class="btn btn-success">Back to Garden</a>
 			</div>
 		</nav>
@@ -38,12 +42,13 @@
 			<div class="row g-3 justify-content-center">
 				<div class="col-sm-12 col-lg-6 mt-5">
 					<div id="results" class="text-center">
-						<video width="1000" height="720" muted loop></video>
+						<video muted loop></video>
 					</div>
 					<div class="text-center">
 						Hover for answer: <span id="answer" class="hidden"></span>
 					</div>
 					<div class="text-center">
+						<a href = "../" class="btn btn-secondary" id="next"><i class="fa-solid fa-caret-left"></i> Calculator</a>
 						<button class="btn btn-primary" id="next">Next Seed <i class="fa-solid fa-caret-right"></i></button>
 					</div>
 				</div>
