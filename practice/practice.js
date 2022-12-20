@@ -9,7 +9,7 @@ function Go() {
 	let poles = randomIdx.poles;
 
 	let clops = poles.map(e => `./webm/${e}.webm`);
-	clops.push('./webm/end.webm');
+	clops.push('./webm/End.webm');
 
 	document.getElementById("answer").innerHTML = poles.join(' ');
 	Play(clops);
