@@ -1,0 +1,17 @@
+.pole-video {
+  max-width: 100%;
+  width: 100%;
+  border-radius: var(--mantine-radius-md);
+  background: #000;
+}
+
+.pole-answer {
+  color: transparent;
+  font-weight: 600;
+  border-bottom: 1px dashed var(--mantine-color-dimmed);
+  transition: color 0.15s;
+}
+
+.pole-answer:hover {
+  color: var(--mantine-color-text);
+}
