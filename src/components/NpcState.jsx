@@ -8,7 +8,7 @@ export default function NpcState({ label, value }) {
                 {label}
             </Text>
             <Text c="white" fw={600} fz="xs" lh={1.2}>
-                {value ?? "—"}
+                {value ?? "-"}
             </Text>
         </Stack>
     );

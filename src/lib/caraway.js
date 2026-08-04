@@ -128,7 +128,7 @@ function makeCarawayCodeTable(from, to) {
   });
 }
 
-// Window of indices to build around the usual starting point — the max
+// Window of indices to build around the usual starting point - the max
 // offset from center is searchWidth/2 - 1, clamped to 0 on the low end.
 const maxOffset = OPTIONS.searchWidth / 2 - 1;
 const from = Math.max(0, OPTIONS.defaultStartIndex - maxOffset);
@@ -137,7 +137,7 @@ const to = OPTIONS.defaultStartIndex + maxOffset;
 export const codes = makeCarawayCodeTable(from, to).filter(Boolean);
 
 /**
- * A pole pattern can coincidentally match an index far from 350 — the point
+ * A pole pattern can coincidentally match an index far from 350 - the point
  * in the table this whole window is centered on, and roughly where this
  * trick actually falls in a real run. A match outside this range is still
  * mathematically valid, but it's almost certainly a coincidental repeat of

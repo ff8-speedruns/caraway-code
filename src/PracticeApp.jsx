@@ -8,7 +8,7 @@ import './practice.css';
 /**
  * Stitches the individual burst clips into one continuous video.
  *
- * Adapted from https://github.com/joshuatz/mediasource-append-examples —
+ * Adapted from https://github.com/joshuatz/mediasource-append-examples -
  * 'sequence' mode lets the browser work out the offsets between separate files.
  *
  * `isCancelled` is checked before each step that touches shared state, so a
@@ -91,7 +91,7 @@ export default function Practice() {
 
     // Clicking "Next seed" again before a clip finishes loading would
     // otherwise leave the previous fetch/append chain running (racing the
-    // new one) and leak its blob URL — this stops the former and revokes
+    // new one) and leak its blob URL - this stops the former and revokes
     // the latter.
     return () => {
       cancelled = true;
