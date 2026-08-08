@@ -3,9 +3,6 @@
  *
  * The RNG that decides how many poles pass the train window is the same one
  * that decides the mansion code, so counting poles tells you the code.
- *
- * Ported from Brofar's original, based on Julien Busset's and Pingval's work
- * and Amshagar's research.
  */
 
 const range = (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
@@ -146,15 +143,16 @@ export const codes = makeCarawayCodeTable(from, to).filter(Boolean);
 export const LIKELY_RANGE = { min: 220, max: 580 };
 
 /**
- * Pole dropdown options: a placeholder, the counts 0-15 (stored as hex, since
- * that is how the pole string is encoded), and `?` for a burst you didn't
- * finish counting, which matches any single value.
+ * Pole dropdown options: a placeholder and the counts 0-15, stored as hex
+ * since that is how the pole string is encoded.
  */
 export const POLE_OPTIONS = [
   { value: '', label: '-' },
   ...Array.from({ length: 16 }, (_, i) => ({ value: i.toString(16), label: String(i) })),
-  { value: '.', label: '?' },
 ];
+
+/** A burst you didn't finish counting, which matches any single count. */
+export const POLE_WILDCARD = '.';
 
 /**
  * Finds table entries whose pole burst ends with the counts entered, plus the

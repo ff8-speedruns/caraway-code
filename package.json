@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ff8-speedruns/ui": "github:ff8-speedruns/ff8-ui#semver:^1.1.0",
+    "@ff8-speedruns/ui": "github:ff8-speedruns/ff8-ui#semver:^1.2.0",
     "@mantine/core": "^9.5.0",
     "@mantine/hooks": "^9.5.0",
     "@tabler/icons-react": "^3.46.0",
