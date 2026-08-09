@@ -5,7 +5,6 @@ import App from './App';
 
 import '@mantine/core/styles.css';
 import '@ff8-speedruns/ui/styles.css';
-import './app.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -1,43 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Accordion, Anchor, Button, Center, Group, List, SimpleGrid, Stack, Text } from "@mantine/core";
+import { useState } from "react";
+import { Accordion, Anchor, Button, Code, Center, Group, List, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconCaretRightFilled } from "@tabler/icons-react";
 import { DPad, ToolShell } from "@ff8-speedruns/ui";
-import { LIKELY_RANGE, OPTIONS, POLE_OPTIONS, POLE_WILDCARD, findCode } from "./lib/caraway";
+import { POLE_COUNT, POLE_OPTIONS, POLE_WILDCARD, findCode } from "./lib/caraway";
 import PoleInput from "./components/PoleInput";
 import ResultCard from "./components/ResultCard";
-
-const POLE_COUNT = OPTIONS.polesArrSize;
 
 export default function App() {
     const [poles, setPoles] = useState(() => Array(POLE_COUNT).fill(""));
     const [unfinished, setUnfinished] = useState(() => Array(POLE_COUNT).fill(false));
     const [active, setActive] = useState(0);
 
-    // Read inside handleDPad instead of closing over these directly, so the
-    // callback's identity stays stable across re-renders.
-    const activeRef = useRef(active);
-    const unfinishedRef = useRef(unfinished);
-    useEffect(() => {
-        activeRef.current = active;
-        unfinishedRef.current = unfinished;
-    }, [active, unfinished]);
-
     // An unfinished burst matches any count, and keeps whatever number was
     // picked before it was ticked so unticking gets it back.
-    const counts = useMemo(() => poles.map((value, i) => (unfinished[i] ? POLE_WILDCARD : value)), [poles, unfinished]);
-
-    // A pole pattern can coincidentally repeat elsewhere in the table, far
-    // from where this trick actually falls in a real run. Those matches are
-    // mathematically valid but not realistic, so they're filtered out here
-    // rather than shown as if they were equally plausible.
-    const results = useMemo(() => findCode(counts).filter((result) => result.index >= LIKELY_RANGE.min && result.index <= LIKELY_RANGE.max), [counts]);
+    const counts = poles.map((value, i) => (unfinished[i] ? POLE_WILDCARD : value));
+    const results = findCode(counts);
 
     const setPole = (position, value) => setPoles((current) => current.map((v, i) => (i === position ? (value ?? "") : v)));
 
     const setPoleUnfinished = (position, checked) => setUnfinished((current) => current.map((v, i) => (i === position ? checked : v)));
 
     // The d-pad walks the dropdowns: left/right pick a burst, up/down change its count.
-    const handleDPad = useCallback((direction) => {
+    const handleDPad = (direction) => {
         if (direction === "left") {
             setActive((current) => Math.max(0, current - 1));
             return;
@@ -47,18 +31,18 @@ export default function App() {
             return;
         }
 
-        if (unfinishedRef.current[activeRef.current]) return;
+        if (unfinished[active]) return;
 
         const step = direction === "up" ? 1 : -1;
         setPoles((current) =>
             current.map((value, i) => {
-                if (i !== activeRef.current) return value;
+                if (i !== active) return value;
                 const index = POLE_OPTIONS.findIndex((option) => option.value === value);
                 const next = Math.min(POLE_OPTIONS.length - 1, Math.max(0, index + step));
                 return POLE_OPTIONS[next].value;
             }),
         );
-    }, []);
+    };
 
     return (
         <ToolShell
@@ -124,7 +108,7 @@ export default function App() {
                                 <List.Item>Mash through the dialogue while counting the poles that pass by the window (they pass by in groupings of 4-6 sets;  an extra-long gap between sets means a set of 0).</List.Item>
                                 <List.Item>Once the dialogue is finished, hold down to leave the hallway ASAP.</List.Item>
                                 <List.Item>Note the groups and sequences in the tool.</List.Item>
-                                <List.Item>If you leave before the last set finishes, tick <strong>unfinished</strong> for it instead of picking a number.</List.Item>
+                                <List.Item>If you leave before the last set finishes, tick <Code>?</Code> for it instead of picking a number.</List.Item>
                                 <List.Item>The tool will output the code to give the guard at the mansion.</List.Item>
                                 <List.Item>If there are multiple possible results, you can compare the animations that happen on your way to the mansion with the results shown to narrow it down.</List.Item>
                             </List>

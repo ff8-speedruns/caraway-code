@@ -5,30 +5,11 @@
  * that decides the mansion code, so counting poles tells you the code.
  */
 
-const range = (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
+const DEFAULT_START_INDEX = 350;
+const SEARCH_WIDTH = 800;
+const LOOKAHEAD_MARGIN = 10;
 
-export const OPTIONS = {
-  defaultStartIndex: 350,
-  searchWidth: 800,
-  polesArrSize: 6,
-};
-
-/** FF8's field RNG: an LCG with a = 0x41C64E6D, b = 0x3039, m = 2^32. */
-class RNG {
-  static A = BigInt(0x41c64e6d);
-  static B = BigInt(0x3039);
-  static M = BigInt(0xffffffff);
-
-  constructor() {
-    this.current = 1;
-  }
-
-  nextRng() {
-    const old = this.current;
-    this.current = Number((BigInt(this.current) * RNG.A + RNG.B) & RNG.M);
-    return old;
-  }
-}
+export const POLE_COUNT = 6;
 
 /** The keypad inputs for a code, entered right to left. */
 function codeToInput(code) {
@@ -45,16 +26,21 @@ function codeToInput(code) {
 }
 
 function makeCarawayCodeTable(from, to) {
-  const rng = new RNG();
-  const margin = 10;
-  const size = to + margin;
+  // FF8's field RNG: an LCG with a = 0x41C64E6D, b = 0x3039, m = 2^32.
+  let state = 1;
+  const nextRngState = () => {
+    const current = state;
+    state = (Math.imul(state, 0x41c64e6d) + 0x3039) >>> 0;
+    return current;
+  };
 
-  const rngStateArr = range(0, size).map(() => rng.nextRng());
-  const sourceArr = rngStateArr.map((v) => (v >> 16) & 255);
+  const sourceArr = Array.from(
+    { length: to + LOOKAHEAD_MARGIN + 1 },
+    () => (nextRngState() >> 16) & 255
+  );
 
-  return Array.from({ length: to }, (_, idx) => {
-    if (idx < from || idx > to) return null;
-
+  return Array.from({ length: to - from + 1 }, (_, offset) => {
+    const idx = from + offset;
     const source = sourceArr[idx];
 
     // The game clamps the code into range.
@@ -65,7 +51,7 @@ function makeCarawayCodeTable(from, to) {
     const code = rawCode.toString().padStart(3, '0');
 
     // Poles per burst is rand(0..255) % 16.
-    const polesMinIdx = idx - (OPTIONS.polesArrSize + 3);
+    const polesMinIdx = idx - (POLE_COUNT + 3);
     const poles = polesMinIdx < 0 ? null : sourceArr.slice(polesMinIdx, idx - 3).map((v) => v % 16);
     const polesHex = poles ? poles.map((n) => n.toString(16)).join('') : '';
 
@@ -111,8 +97,6 @@ function makeCarawayCodeTable(from, to) {
 
     return {
       index: idx,
-      rngState: rngStateArr[idx].toString(16).padStart(8, '0'),
-      source,
       code,
       poles,
       polesHex,
@@ -126,12 +110,13 @@ function makeCarawayCodeTable(from, to) {
 }
 
 // Window of indices to build around the usual starting point - the max
-// offset from center is searchWidth/2 - 1, clamped to 0 on the low end.
-const maxOffset = OPTIONS.searchWidth / 2 - 1;
-const from = Math.max(0, OPTIONS.defaultStartIndex - maxOffset);
-const to = OPTIONS.defaultStartIndex + maxOffset;
+// offset from center is SEARCH_WIDTH/2 - 1, clamped to 0 on the low end.
+const maxOffset = SEARCH_WIDTH / 2 - 1;
 
-export const codes = makeCarawayCodeTable(from, to).filter(Boolean);
+export const codes = makeCarawayCodeTable(
+  Math.max(0, DEFAULT_START_INDEX - maxOffset),
+  DEFAULT_START_INDEX + maxOffset
+);
 
 /**
  * A pole pattern can coincidentally match an index far from 350 - the point
@@ -140,7 +125,7 @@ export const codes = makeCarawayCodeTable(from, to).filter(Boolean);
  * mathematically valid, but it's almost certainly a coincidental repeat of
  * the same pole pattern elsewhere in the table, not a real code.
  */
-export const LIKELY_RANGE = { min: 220, max: 580 };
+const LIKELY_RANGE = { min: 220, max: 580 };
 
 /**
  * Pole dropdown options: a placeholder and the counts 0-15, stored as hex
@@ -163,9 +148,10 @@ export function findCode(poleValues) {
   if (!pattern) return [];
 
   const expression = new RegExp(`${pattern}$`);
+  const isLikely = (entry) => entry.index >= LIKELY_RANGE.min && entry.index <= LIKELY_RANGE.max;
 
   return codes
-    .filter((entry) => expression.test(entry.polesHex))
+    .filter((entry) => isLikely(entry) && expression.test(entry.polesHex))
     .map((entry) => ({
       ...entry,
       backup: codes.find((code) => code.index === entry.index + 2) ?? null,

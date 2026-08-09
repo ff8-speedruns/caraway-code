@@ -1,4 +1,3 @@
-import PropTypes from "prop-types";
 import { Code, Divider, Group, Paper, Stack, Text } from "@mantine/core";
 import NpcState from "./NpcState";
 
@@ -50,18 +49,3 @@ export default function ResultCard({ result }) {
         </Paper>
     );
 }
-
-ResultCard.propTypes = {
-    result: PropTypes.shape({
-        code: PropTypes.string.isRequired,
-        input: PropTypes.string.isRequired,
-        station: PropTypes.node,
-        escalator: PropTypes.node,
-        street: PropTypes.node,
-        bus: PropTypes.node,
-        backup: PropTypes.shape({
-            code: PropTypes.string.isRequired,
-            input: PropTypes.string.isRequired,
-        }),
-    }).isRequired,
-};

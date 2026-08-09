@@ -1,4 +1,3 @@
-import PropTypes from "prop-types";
 import { Checkbox, Group, Input, Select, Stack } from "@mantine/core";
 import { POLE_OPTIONS } from "../lib/caraway";
 
@@ -10,12 +9,12 @@ export default function PoleInput({ position, value, unfinished, active, onChang
     return (
         <Stack gap={4}>
             <Group gap={4} justify="space-between" wrap="nowrap">
-                <Input.Label htmlFor={inputId}>{`Pole ${position + 1}`}</Input.Label>
+                <Input.Label htmlFor={inputId}>{`Set ${position + 1}`}</Input.Label>
                 <Checkbox
                     size="xs"
                     checked={unfinished}
                     onChange={(event) => onUnfinishedChange(event.currentTarget.checked)}
-                    label="unfinished"
+                    label="?"
                     labelProps={{ fz: 11 }}
                     styles={{ label: { paddingInlineStart: 4 } }}
                 />
@@ -36,13 +35,3 @@ export default function PoleInput({ position, value, unfinished, active, onChang
         </Stack>
     );
 }
-
-PoleInput.propTypes = {
-    position: PropTypes.number.isRequired,
-    value: PropTypes.string.isRequired,
-    unfinished: PropTypes.bool.isRequired,
-    active: PropTypes.bool.isRequired,
-    onChange: PropTypes.func.isRequired,
-    onUnfinishedChange: PropTypes.func.isRequired,
-    onFocus: PropTypes.func.isRequired,
-};

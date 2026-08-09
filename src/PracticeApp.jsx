@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Anchor, Button, Center, Group, Stack, Text } from '@mantine/core';
+import { Button, Center, Group, Stack, Text } from '@mantine/core';
 import { IconCaretLeftFilled, IconReload } from '@tabler/icons-react';
 import { ToolShell } from '@ff8-speedruns/ui';
 import { codes } from './lib/caraway';

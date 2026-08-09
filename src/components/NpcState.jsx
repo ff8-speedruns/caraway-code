@@ -1,4 +1,3 @@
-import PropTypes from "prop-types";
 import { Stack, Text } from "@mantine/core";
 
 export default function NpcState({ label, value }) {
@@ -13,8 +12,3 @@ export default function NpcState({ label, value }) {
         </Stack>
     );
 }
-
-NpcState.propTypes = {
-    label: PropTypes.node.isRequired,
-    value: PropTypes.node,
-};

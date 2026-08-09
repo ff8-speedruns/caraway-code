@@ -26,6 +26,8 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // No runtime prop validation on components only this app renders.
+      'react/prop-types': 'off',
     },
   },
 ];
