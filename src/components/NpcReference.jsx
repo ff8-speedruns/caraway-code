@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Paper, SimpleGrid, Stack, Text } from "@mantine/core";
-import { NPC_STATES } from "../lib/caraway";
+import { NPC_LABELS, NPC_STATES } from "../lib/caraway";
 
 const NPC_INFO = {
     station: {
-        label: "Station",
         description: "On the train platform.",
         states: {
             None: "Nobody crosses the platform.",
@@ -12,7 +11,6 @@ const NPC_INFO = {
         },
     },
     escalator: {
-        label: "Escalator",
         description: "Station escalator.",
         states: {
             Boy: "Boy (cream shirt) appears.",
@@ -22,7 +20,6 @@ const NPC_INFO = {
         },
     },
     street: {
-        label: "Street",
         description: "First screen after the station.",
         states: {
             None: "No NPC at all.",
@@ -31,7 +28,6 @@ const NPC_INFO = {
         },
     },
     bus: {
-        label: "Bus",
         description: "The bus in front of the mansion.",
         states: {
           Leave: "Dog lady appears as bus pulls away.",
@@ -80,7 +76,7 @@ function NpcExample({ field, state }) {
             ) : (
                 <video
                     src={`${import.meta.env.BASE_URL}${CLIP_DIRECTORY}/${file}`}
-                    aria-label={`${NPC_INFO[field].label}: ${state}`}
+                    aria-label={`${NPC_LABELS[field]}: ${state}`}
                     autoPlay
                     muted
                     loop
@@ -118,7 +114,7 @@ export default function NpcReference() {
                 <Stack key={field} gap={6}>
                     <div>
                         <Text fw={600} size="sm">
-                            {NPC_INFO[field].label}
+                            {NPC_LABELS[field]}
                         </Text>
                         <Text size="xs" c="dimmed">
                             {NPC_INFO[field].description}

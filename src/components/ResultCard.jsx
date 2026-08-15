@@ -1,4 +1,5 @@
 import { Code, Divider, Group, Paper, Stack, Text } from "@mantine/core";
+import { NPC_LABELS } from "../lib/caraway";
 import NpcState from "./NpcState";
 
 export default function ResultCard({ result, showStats }) {
@@ -33,10 +34,9 @@ export default function ResultCard({ result, showStats }) {
                 </Stack>
 
                 <Stack gap={2} style={{ flex: 1 }}>
-                    <NpcState label="Station" value={result.station} />
-                    <NpcState label="Escalator" value={result.escalator} />
-                    <NpcState label="Street" value={result.street} />
-                    <NpcState label="Bus" value={result.bus} />
+                    {Object.entries(NPC_LABELS).map(([field, label]) => (
+                        <NpcState key={field} label={label} value={result[field]} />
+                    ))}
                 </Stack>
             </Group>
 

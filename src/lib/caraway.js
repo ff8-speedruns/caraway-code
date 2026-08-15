@@ -26,7 +26,7 @@ const LIKELY_RANGE = { min: 220, max: 580 };
  * The pole stream repeats every 2^20 indices, so this has to stay well under
  * that or every pattern gains a duplicate.
  */
-const WIDE_RANGE = { min: 0, max: 20000 };
+const WIDE_MAX_INDEX = 20000;
 
 export const POLE_COUNT = 6;
 
@@ -51,7 +51,7 @@ function codeToInput(code) {
     .join(', ');
 }
 
-function makeCarawayCodeTable(from, to) {
+function makeCarawayCodeTable(to) {
   // FF8's field RNG: an LCG with a = 0x41C64E6D, b = 0x3039, m = 2^32.
   let state = 1;
   const nextRngState = () => {
@@ -65,8 +65,7 @@ function makeCarawayCodeTable(from, to) {
   const stateArr = Array.from({ length: to + LOOKAHEAD_MARGIN + 1 }, () => nextRngState());
   const sourceArr = stateArr.map((rngState) => (rngState >> 16) & 255);
 
-  return Array.from({ length: to - from + 1 }, (_, offset) => {
-    const idx = from + offset;
+  return Array.from({ length: to + 1 }, (_, idx) => {
     const source = sourceArr[idx];
 
     // The game clamps the code into range.
@@ -137,13 +136,13 @@ function makeCarawayCodeTable(from, to) {
   });
 }
 
-const inRange = (range) => (entry) => entry.index >= range.min && entry.index <= range.max;
+// One table covers both searches, indexed from 0 so an entry's index is also
+// its position; the default search is just a narrower view of it.
+const wideTable = makeCarawayCodeTable(WIDE_MAX_INDEX);
 
-// One table covers both searches; the default one is just a narrower view of it.
-const wideTable = makeCarawayCodeTable(WIDE_RANGE.min, WIDE_RANGE.max);
-const entryAt = (index) => wideTable[index - WIDE_RANGE.min] ?? null;
-
-export const codes = wideTable.filter(inRange(LIKELY_RANGE));
+export const codes = wideTable.filter(
+  (entry) => entry.index >= LIKELY_RANGE.min && entry.index <= LIKELY_RANGE.max
+);
 
 /**
  * Counted sets below which a wide search stops being trustworthy - it will
@@ -163,6 +162,14 @@ export const NPC_STATES = {
   escalator: distinctStates('escalator'),
   street: distinctStates('street'),
   bus: distinctStates('bus'),
+};
+
+/** Display names for the NPC fields, in the order you meet them on the route. */
+export const NPC_LABELS = {
+  station: 'Station',
+  escalator: 'Escalator',
+  street: 'Street',
+  bus: 'Bus',
 };
 
 /**
@@ -198,6 +205,6 @@ export function findCode(poleValues, { wide = false } = {}) {
     .sort((a, b) => distanceFromUsualIndex(a) - distanceFromUsualIndex(b))
     .map((entry) => ({
       ...entry,
-      backup: entryAt(entry.index + 2),
+      backup: wideTable[entry.index + 2] ?? null,
     }));
 }
