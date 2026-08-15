@@ -6,10 +6,36 @@
  */
 
 const DEFAULT_START_INDEX = 350;
-const SEARCH_WIDTH = 800;
 const LOOKAHEAD_MARGIN = 10;
 
+/** The field RNG state is 32 bits, so it always shows as 8 hex digits. */
+const RNG_STATE_HEX_DIGITS = 8;
+
+/**
+ * The window a normal run lands in, and the only one the default search looks
+ * at. A pole pattern can coincidentally repeat elsewhere in the stream, so a
+ * match far from 350 is mathematically valid but almost certainly the wrong
+ * index.
+ */
+const LIKELY_RANGE = { min: 220, max: 580 };
+
+/**
+ * How far the wide search reaches, for working out where a run went when its
+ * index fell outside LIKELY_RANGE. A full six-set count still resolves to
+ * exactly one index at this width, which is why WIDE_SEARCH_MIN_SETS exists.
+ * The pole stream repeats every 2^20 indices, so this has to stay well under
+ * that or every pattern gains a duplicate.
+ */
+const WIDE_RANGE = { min: 0, max: 20000 };
+
 export const POLE_COUNT = 6;
+
+/**
+ * RNG calls the game makes between the last pole set and the code: one for the
+ * station NPC and two for the escalator. The burst window is offset by this
+ * at both ends, so the two uses below have to move together.
+ */
+const CALLS_BETWEEN_POLES_AND_CODE = 3;
 
 /** The keypad inputs for a code, entered right to left. */
 function codeToInput(code) {
@@ -34,10 +60,10 @@ function makeCarawayCodeTable(from, to) {
     return current;
   };
 
-  const sourceArr = Array.from(
-    { length: to + LOOKAHEAD_MARGIN + 1 },
-    () => (nextRngState() >> 16) & 255
-  );
+  // The full 32-bit states are kept alongside the bytes derived from them, so a
+  // router watching the RNG in memory can match an index directly.
+  const stateArr = Array.from({ length: to + LOOKAHEAD_MARGIN + 1 }, () => nextRngState());
+  const sourceArr = stateArr.map((rngState) => (rngState >> 16) & 255);
 
   return Array.from({ length: to - from + 1 }, (_, offset) => {
     const idx = from + offset;
@@ -51,8 +77,9 @@ function makeCarawayCodeTable(from, to) {
     const code = rawCode.toString().padStart(3, '0');
 
     // Poles per burst is rand(0..255) % 16.
-    const polesMinIdx = idx - (POLE_COUNT + 3);
-    const poles = polesMinIdx < 0 ? null : sourceArr.slice(polesMinIdx, idx - 3).map((v) => v % 16);
+    const polesMinIdx = idx - (POLE_COUNT + CALLS_BETWEEN_POLES_AND_CODE);
+    const polesMaxIdx = idx - CALLS_BETWEEN_POLES_AND_CODE;
+    const poles = polesMinIdx < 0 ? null : sourceArr.slice(polesMinIdx, polesMaxIdx).map((v) => v % 16);
     const polesHex = poles ? poles.map((n) => n.toString(16)).join('') : '';
 
     // NPC states, useful as confirmation that you're on the right index.
@@ -69,7 +96,7 @@ function makeCarawayCodeTable(from, to) {
 
     let street;
     if (sourceArr[idx + 1] >= 120) {
-      street = sourceArr[idx + 1] >= 200 && sourceArr[idx + 3] >= 130 ? 'Still->Walk' : 'None';
+      street = sourceArr[idx + 1] >= 200 && sourceArr[idx + 3] >= 130 ? 'Still' : 'None';
     } else {
       street = 'Walk';
     }
@@ -97,6 +124,7 @@ function makeCarawayCodeTable(from, to) {
 
     return {
       index: idx,
+      rngState: stateArr[idx].toString(16).padStart(RNG_STATE_HEX_DIGITS, '0').toUpperCase(),
       code,
       poles,
       polesHex,
@@ -109,23 +137,33 @@ function makeCarawayCodeTable(from, to) {
   });
 }
 
-// Window of indices to build around the usual starting point - the max
-// offset from center is SEARCH_WIDTH/2 - 1, clamped to 0 on the low end.
-const maxOffset = SEARCH_WIDTH / 2 - 1;
+const inRange = (range) => (entry) => entry.index >= range.min && entry.index <= range.max;
 
-export const codes = makeCarawayCodeTable(
-  Math.max(0, DEFAULT_START_INDEX - maxOffset),
-  DEFAULT_START_INDEX + maxOffset
-);
+// One table covers both searches; the default one is just a narrower view of it.
+const wideTable = makeCarawayCodeTable(WIDE_RANGE.min, WIDE_RANGE.max);
+const entryAt = (index) => wideTable[index - WIDE_RANGE.min] ?? null;
+
+export const codes = wideTable.filter(inRange(LIKELY_RANGE));
 
 /**
- * A pole pattern can coincidentally match an index far from 350 - the point
- * in the table this whole window is centered on, and roughly where this
- * trick actually falls in a real run. A match outside this range is still
- * mathematically valid, but it's almost certainly a coincidental repeat of
- * the same pole pattern elsewhere in the table, not a real code.
+ * Counted sets below which a wide search stops being trustworthy - it will
+ * return coincidental matches from all over the stream rather than one answer.
  */
-const LIKELY_RANGE = { min: 220, max: 580 };
+export const WIDE_SEARCH_MIN_SETS = 5;
+
+const distinctStates = (field) => [...new Set(codes.map((entry) => entry[field]))].sort();
+
+/**
+ * Every NPC state the table can actually produce, read back off the table
+ * rather than listed by hand so the reference gallery cannot drift from the
+ * logic that assigns them.
+ */
+export const NPC_STATES = {
+  station: distinctStates('station'),
+  escalator: distinctStates('escalator'),
+  street: distinctStates('street'),
+  bus: distinctStates('bus'),
+};
 
 /**
  * Pole dropdown options: a placeholder and the counts 0-15, stored as hex
@@ -141,19 +179,25 @@ export const POLE_WILDCARD = '.';
 
 /**
  * Finds table entries whose pole burst ends with the counts entered, plus the
- * backup code two indices later in case you're one seed off.
+ * backup code two indices later in case you're one seed off. Likeliest first,
+ * which only matters for a wide search - the default one rarely returns more
+ * than one.
+ *
+ * `wide` searches the whole stream instead of the window a normal run lands in.
  */
-export function findCode(poleValues) {
+export function findCode(poleValues, { wide = false } = {}) {
   const pattern = poleValues.filter(Boolean).join('');
   if (!pattern) return [];
 
   const expression = new RegExp(`${pattern}$`);
-  const isLikely = (entry) => entry.index >= LIKELY_RANGE.min && entry.index <= LIKELY_RANGE.max;
+  const distanceFromUsualIndex = (entry) => Math.abs(entry.index - DEFAULT_START_INDEX);
+  const pool = wide ? wideTable : codes;
 
-  return codes
-    .filter((entry) => isLikely(entry) && expression.test(entry.polesHex))
+  return pool
+    .filter((entry) => expression.test(entry.polesHex))
+    .sort((a, b) => distanceFromUsualIndex(a) - distanceFromUsualIndex(b))
     .map((entry) => ({
       ...entry,
-      backup: codes.find((code) => code.index === entry.index + 2) ?? null,
+      backup: entryAt(entry.index + 2),
     }));
 }

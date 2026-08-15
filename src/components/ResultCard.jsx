@@ -1,7 +1,7 @@
 import { Code, Divider, Group, Paper, Stack, Text } from "@mantine/core";
 import NpcState from "./NpcState";
 
-export default function ResultCard({ result }) {
+export default function ResultCard({ result, showStats }) {
     return (
         <Paper
             radius="md"
@@ -20,6 +20,16 @@ export default function ResultCard({ result }) {
                     <Code color="rgba(0,0,0,0)" c="white" style={{ letterSpacing: "0.15em" }} fw={600} fz={13}>
                         {result.input}
                     </Code>
+                    {showStats && (
+                        <>
+                            <Code color="rgba(0,0,0,0)" c="white" style={{ letterSpacing: "0.15em" }} fz={9}>
+                                Index {result.index}
+                            </Code>
+                            <Code color="rgba(0,0,0,0)" c="blue.1" style={{ letterSpacing: "0.1em" }} fz={9}>
+                                {result.rngState}
+                            </Code>
+                        </>
+                    )}
                 </Stack>
 
                 <Stack gap={2} style={{ flex: 1 }}>
