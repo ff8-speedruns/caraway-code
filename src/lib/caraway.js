@@ -100,7 +100,7 @@ function streetLabel(roll, confirmRoll) {
 
 /**
  * Tracks is the dog lady on the caraway guard screen, and the three names say
- * when she turns up relative to the bus. Two rolls vote on how early: both high 
+ * when she turns up relative to the bus. Two rolls vote on how early: both high
  * and she arrives with it, one and she appears as it stops, neither and she only
  * shows as it pulls away.
  */
@@ -203,18 +203,6 @@ export const codes = wideTable.filter(
  * return coincidental matches from all over the stream rather than one answer.
  */
 export const WIDE_SEARCH_MIN_SETS = 5;
-
-const distinctStates = (field) => [...new Set(codes.map((entry) => entry[field]))].sort();
-
-/**
- * Every NPC state the table can actually produce
- */
-export const NPC_STATES = {
-  station: distinctStates('station'),
-  escalator: distinctStates('escalator'),
-  street: distinctStates('street'),
-  bus: distinctStates('bus'),
-};
 
 /**
  * Pole dropdown options: a placeholder and the counts 0-15, stored as hex

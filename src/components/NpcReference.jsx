@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Paper, SimpleGrid, Stack, Text } from '@mantine/core';
-import { NPC_STATES } from '../lib/caraway';
 
 const NPC_INFO = {
   station: {
     label: 'Station',
     description: 'On the train platform.',
     states: {
-      None: 'Nobody crosses the platform.',
       Walk: 'NPC walks across as you head for the exit.',
+      None: 'Nobody crosses the platform.',
     },
   },
   escalator: {
@@ -16,8 +15,8 @@ const NPC_INFO = {
     description: 'Station escalator.',
     states: {
       Boy: 'Boy (cream shirt) appears.',
-      'Boy + Girl': 'Both children appear.',
       Girl: 'Girl (green clothes) appears.',
+      'Boy + Girl': 'Both children appear.',
       None: 'Escalator is empty.',
     },
   },
@@ -26,7 +25,7 @@ const NPC_INFO = {
     description: 'First screen after the station.',
     states: {
       None: 'No NPC at all.',
-      Still: 'Stationary NPC in beige jacket.',
+      Still: 'Stationary NPC in beige jacket. A second NPC may or may not appear.',
       Walk: 'Pair of NPCs walk across the screen.',
     },
   },
@@ -34,9 +33,9 @@ const NPC_INFO = {
     label: 'Bus',
     description: 'The bus in front of the mansion.',
     states: {
-      Leave: 'Dog lady appears as bus pulls away.',
       Spawn: 'Dog lady appears at the same time as the bus.',
       Stop: 'Dog lady appears as the bus stops.',
+      Leave: 'Dog lady appears as bus pulls away.',
       None: 'Dog lady never appears.',
     },
   },
@@ -110,22 +109,22 @@ export default function NpcReference() {
   return (
     <Stack gap="lg">
       <Text size="sm">
-        When more than one code matches your pole counts, these animations tell you which one you
-        are on. Watch for them on the way to the mansion and compare against each result card.
+        When more than one code matches your pole counts, these animations help you confirm which
+        one you to use. Watch for them on the way to the mansion and compare against each result.
       </Text>
 
-      {Object.entries(NPC_STATES).map(([field, states]) => (
+      {Object.entries(NPC_INFO).map(([field, info]) => (
         <Stack key={field} gap={6}>
           <div>
             <Text fw={600} size="sm">
-              {NPC_INFO[field].label}
+              {info.label}
             </Text>
             <Text size="xs" c="dimmed">
-              {NPC_INFO[field].description}
+              {info.description}
             </Text>
           </div>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs">
-            {states.map((state) => (
+            {Object.keys(info.states).map((state) => (
               <NpcExample key={state} field={field} state={state} />
             ))}
           </SimpleGrid>
