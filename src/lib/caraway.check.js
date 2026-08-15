@@ -39,7 +39,7 @@ for (const entry of codes.filter((c) => c.poles)) {
   assert.deepEqual(
     results.map((result) => result.index),
     [entry.index],
-    `index ${entry.index} did not round trip uniquely`
+    `index ${entry.index} did not round trip uniquely`,
   );
 }
 
@@ -47,7 +47,7 @@ for (const entry of codes.filter((c) => c.poles)) {
 const wildcarded = ['9', '8', 'c', 'f', '6', '.'];
 assert.ok(
   findCode(wildcarded).some((result) => result.index === ANCHOR.index),
-  'wildcard lost the true match'
+  'wildcard lost the true match',
 );
 
 // A wide search must reach past the normal window without losing the near match,
@@ -56,21 +56,29 @@ const anchorPoles = ANCHOR.poles.map((count) => count.toString(16));
 assert.deepEqual(
   findCode(anchorPoles, { wide: true }).map((result) => result.index),
   [ANCHOR.index],
-  'wide search did not pin a full count'
+  'wide search did not pin a full count',
 );
 
 const outsideNormalWindow = ['4', '0', '6', '9', 'd', '9'];
-assert.equal(findCode(outsideNormalWindow).length, 0, 'index 767 should be outside the default search');
+assert.equal(
+  findCode(outsideNormalWindow).length,
+  0,
+  'index 767 should be outside the default search',
+);
 assert.deepEqual(
   findCode(outsideNormalWindow, { wide: true }).map((result) => result.index),
   [767],
-  'wide search did not reach index 767'
+  'wide search did not reach index 767',
 );
 
 // Results come back likeliest first, so capping the display keeps the best ones.
 const many = findCode(['9'], { wide: true });
 assert.ok(many.length > 1, 'a single set should match many indices in a wide search');
 const distances = many.map((result) => Math.abs(result.index - 350));
-assert.deepEqual(distances, [...distances].sort((a, b) => a - b), 'results are not ordered by likelihood');
+assert.deepEqual(
+  distances,
+  [...distances].sort((a, b) => a - b),
+  'results are not ordered by likelihood',
+);
 
 console.log('caraway table OK');

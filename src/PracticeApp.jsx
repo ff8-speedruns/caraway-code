@@ -17,9 +17,7 @@ import './practice.css';
  * (or null if it bailed before creating one) so the caller can revoke it.
  */
 async function playSequence(videoElement, clipUrls, isCancelled) {
-  const buffers = await Promise.all(
-    clipUrls.map(async (url) => (await fetch(url)).arrayBuffer())
-  );
+  const buffers = await Promise.all(clipUrls.map(async (url) => (await fetch(url)).arrayBuffer()));
   if (isCancelled()) return null;
 
   const mediaSource = new MediaSource();

@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "test": "node src/lib/caraway.check.js",
+    "prettier-format": "prettier . --write",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.8.0",
+    "prettier": "^3.9.6",
     "vite": "^8.2.0"
   }
 }

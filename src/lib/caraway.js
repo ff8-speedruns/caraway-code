@@ -30,12 +30,41 @@ const WIDE_MAX_INDEX = 20000;
 
 export const POLE_COUNT = 6;
 
+/** A set can hold 0-15 poles, so a count always fits in one hex digit. */
+const POLES_PER_SET = 16;
+
 /**
- * RNG calls the game makes between the last pole set and the code: one for the
- * station NPC and two for the escalator. The burst window is offset by this
- * at both ends, so the two uses below have to move together.
+ * RNG calls the game makes between the last pole set and the code: the station
+ * roll and the two escalator rolls. The burst window is offset by this at both
+ * ends, so the two uses below have to move together.
  */
 const CALLS_BETWEEN_POLES_AND_CODE = 3;
+
+/** Below this, the rolls a code depends on run off the front of the stream. */
+const FIRST_COMPLETE_INDEX = POLE_COUNT + CALLS_BETWEEN_POLES_AND_CODE;
+
+/** A code byte at or above this wraps back into the 1-199 the keypad accepts. */
+const CODE_WRAP_MIN = 200;
+const CODE_WRAP_OFFSET = 199;
+
+/**
+ * Thresholds the game compares its 0-255 rolls against when deciding each NPC
+ * animation. These come from the pole-skip research rather than from anything
+ * derivable here, so they only change if that research does.
+ */
+const STATION_WALKER_ABSENT_MIN = 100;
+const ESCALATOR_CHILD_ABSENT_MIN = 150;
+const STREET_WALKERS_ABSENT_MIN = 120;
+const STREET_LOITERER_MIN = 200;
+const STREET_LOITERER_CONFIRM_MIN = 130;
+const DOG_LADY_ABSENT_MIN = 200;
+const DOG_LADY_EARLY_MIN = 100;
+
+/**
+ * Street and bus both read the roll at index + 1, and both happen to test it
+ * against 200.
+ */
+const BUS_ROLLS_SHIFT_MIN = 200;
 
 /** The keypad inputs for a code, entered right to left. */
 function codeToInput(code) {
@@ -51,6 +80,47 @@ function codeToInput(code) {
     .join(', ');
 }
 
+/** One roll decides whether anybody crosses the platform. */
+const stationLabel = (roll) => (roll >= STATION_WALKER_ABSENT_MIN ? 'None' : 'Walk');
+
+/** Each child is decided by its own roll, so all four combinations occur. */
+function escalatorLabel(girlIsPresent, boyIsPresent) {
+  if (boyIsPresent && girlIsPresent) return 'Boy + Girl';
+  if (boyIsPresent) return 'Boy';
+  if (girlIsPresent) return 'Girl';
+  return 'None';
+}
+
+/** Walk is a pair crossing the screen; Still is the one who stands there. */
+function streetLabel(roll, confirmRoll) {
+  if (roll < STREET_WALKERS_ABSENT_MIN) return 'Walk';
+  if (roll >= STREET_LOITERER_MIN && confirmRoll >= STREET_LOITERER_CONFIRM_MIN) return 'Still';
+  return 'None';
+}
+
+/**
+ * Tracks is the dog lady on the caraway guard screen, and the three names say
+ * when she turns up relative to the bus. Two rolls vote on how early: both high 
+ * and she arrives with it, one and she appears as it stops, neither and she only
+ * shows as it pulls away.
+ */
+function dogLadyCue(first, second) {
+  const earlyRolls = [first, second].filter((roll) => roll >= DOG_LADY_EARLY_MIN).length;
+  if (earlyRolls === 2) return 'Spawn';
+  if (earlyRolls === 1) return 'Stop';
+  return 'Leave';
+}
+
+/**
+ * How the rolls around a code index are used, in the order the game makes them:
+ *
+ *   index - 9 .. index - 4   the six pole sets
+ *   index - 3                station
+ *   index - 2                escalator girl
+ *   index - 1                escalator boy
+ *   index                    the code itself
+ *   index + 1 .. index + 6   street and bus
+ */
 function makeCarawayCodeTable(to) {
   // FF8's field RNG: an LCG with a = 0x41C64E6D, b = 0x3039, m = 2^32.
   let state = 1;
@@ -62,68 +132,52 @@ function makeCarawayCodeTable(to) {
 
   // The full 32-bit states are kept alongside the bytes derived from them, so a
   // router watching the RNG in memory can match an index directly.
-  const stateArr = Array.from({ length: to + LOOKAHEAD_MARGIN + 1 }, () => nextRngState());
-  const sourceArr = stateArr.map((rngState) => (rngState >> 16) & 255);
+  const rngStates = Array.from({ length: to + LOOKAHEAD_MARGIN + 1 }, () => nextRngState());
+  const rolls = rngStates.map((rngState) => (rngState >> 16) & 255);
 
-  return Array.from({ length: to + 1 }, (_, idx) => {
-    const source = sourceArr[idx];
+  return Array.from({ length: to + 1 }, (_, index) => {
+    const roll = rolls[index];
 
-    // The game clamps the code into range.
-    let rawCode = source;
-    if (source === 0) rawCode = 1;
-    else if (source >= 200) rawCode = source - 199;
+    let rawCode = roll;
+    if (roll === 0) rawCode = 1;
+    else if (roll >= CODE_WRAP_MIN) rawCode = roll - CODE_WRAP_OFFSET;
 
     const code = rawCode.toString().padStart(3, '0');
 
-    // Poles per burst is rand(0..255) % 16.
-    const polesMinIdx = idx - (POLE_COUNT + CALLS_BETWEEN_POLES_AND_CODE);
-    const polesMaxIdx = idx - CALLS_BETWEEN_POLES_AND_CODE;
-    const poles = polesMinIdx < 0 ? null : sourceArr.slice(polesMinIdx, polesMaxIdx).map((v) => v % 16);
-    const polesHex = poles ? poles.map((n) => n.toString(16)).join('') : '';
+    // Entries below the first complete index can never match a search, since no
+    // non-empty pattern matches their empty pole string.
+    const hasFullHistory = index >= FIRST_COMPLETE_INDEX;
+    const burstStart = index - FIRST_COMPLETE_INDEX;
+    const burstEnd = index - CALLS_BETWEEN_POLES_AND_CODE;
+
+    const poles = hasFullHistory
+      ? rolls.slice(burstStart, burstEnd).map((value) => value % POLES_PER_SET)
+      : null;
+    const polesHex = poles ? poles.map((count) => count.toString(16)).join('') : '';
 
     // NPC states, useful as confirmation that you're on the right index.
-    const station = idx - 3 >= 0 ? (sourceArr[idx - 3] >= 100 ? 'None' : 'Walk') : null;
+    const station = hasFullHistory ? stationLabel(rolls[index - 3]) : null;
+    const escalator = hasFullHistory
+      ? escalatorLabel(
+          rolls[index - 2] < ESCALATOR_CHILD_ABSENT_MIN,
+          rolls[index - 1] < ESCALATOR_CHILD_ABSENT_MIN,
+        )
+      : null;
 
-    let escalator = null;
-    if (idx - 2 >= 0) {
-      if (sourceArr[idx - 2] >= 150) {
-        escalator = sourceArr[idx - 1] >= 150 ? 'None' : 'Boy';
-      } else {
-        escalator = sourceArr[idx - 1] >= 150 ? 'Girl' : 'Boy + Girl';
-      }
-    }
+    const street = streetLabel(rolls[index + 1], rolls[index + 3]);
 
-    let street;
-    if (sourceArr[idx + 1] >= 120) {
-      street = sourceArr[idx + 1] >= 200 && sourceArr[idx + 3] >= 130 ? 'Still' : 'None';
-    } else {
-      street = 'Walk';
-    }
-
-    let bus;
-    if (sourceArr[idx + 1] >= 200) {
-      if (sourceArr[idx + 6] < 200) {
-        if (sourceArr[idx + 4] >= 100) {
-          bus = sourceArr[idx + 5] >= 100 ? 'Spawn' : 'Stop';
-        } else {
-          bus = sourceArr[idx + 5] >= 100 ? 'Stop' : 'Leave';
-        }
-      } else {
-        bus = 'None';
-      }
-    } else if (sourceArr[idx + 4] < 200) {
-      if (sourceArr[idx + 2] >= 100) {
-        bus = sourceArr[idx + 3] >= 100 ? 'Spawn' : 'Stop';
-      } else {
-        bus = sourceArr[idx + 3] >= 100 ? 'Stop' : 'Leave';
-      }
-    } else {
-      bus = 'None';
-    }
+    // A high roll at +1 shifts the dog lady's rolls two later in the stream.
+    const rollsAreShifted = rolls[index + 1] >= BUS_ROLLS_SHIFT_MIN;
+    const dogLadyGate = rolls[index + (rollsAreShifted ? 6 : 4)];
+    const dogLadyVoteStart = index + (rollsAreShifted ? 4 : 2);
+    const bus =
+      dogLadyGate >= DOG_LADY_ABSENT_MIN
+        ? 'None'
+        : dogLadyCue(rolls[dogLadyVoteStart], rolls[dogLadyVoteStart + 1]);
 
     return {
-      index: idx,
-      rngState: stateArr[idx].toString(16).padStart(RNG_STATE_HEX_DIGITS, '0').toUpperCase(),
+      index,
+      rngState: rngStates[index].toString(16).padStart(RNG_STATE_HEX_DIGITS, '0').toUpperCase(),
       code,
       poles,
       polesHex,
@@ -141,7 +195,7 @@ function makeCarawayCodeTable(to) {
 const wideTable = makeCarawayCodeTable(WIDE_MAX_INDEX);
 
 export const codes = wideTable.filter(
-  (entry) => entry.index >= LIKELY_RANGE.min && entry.index <= LIKELY_RANGE.max
+  (entry) => entry.index >= LIKELY_RANGE.min && entry.index <= LIKELY_RANGE.max,
 );
 
 /**
@@ -153,9 +207,7 @@ export const WIDE_SEARCH_MIN_SETS = 5;
 const distinctStates = (field) => [...new Set(codes.map((entry) => entry[field]))].sort();
 
 /**
- * Every NPC state the table can actually produce, read back off the table
- * rather than listed by hand so the reference gallery cannot drift from the
- * logic that assigns them.
+ * Every NPC state the table can actually produce
  */
 export const NPC_STATES = {
   station: distinctStates('station'),
@@ -164,24 +216,23 @@ export const NPC_STATES = {
   bus: distinctStates('bus'),
 };
 
-/** Display names for the NPC fields, in the order you meet them on the route. */
-export const NPC_LABELS = {
-  station: 'Station',
-  escalator: 'Escalator',
-  street: 'Street',
-  bus: 'Bus',
-};
-
 /**
  * Pole dropdown options: a placeholder and the counts 0-15, stored as hex
  * since that is how the pole string is encoded.
  */
 export const POLE_OPTIONS = [
   { value: '', label: '-' },
-  ...Array.from({ length: 16 }, (_, i) => ({ value: i.toString(16), label: String(i) })),
+  ...Array.from({ length: POLES_PER_SET }, (_, count) => ({
+    value: count.toString(16),
+    label: String(count),
+  })),
 ];
 
-/** A burst you didn't finish counting, which matches any single count. */
+/**
+ * A burst you didn't finish counting. The pole burst is stored as a hex string
+ * so a pattern can be matched with a regular expression, which is what lets an
+ * unfinished set stand in as the any-character wildcard.
+ */
 export const POLE_WILDCARD = '.';
 
 /**

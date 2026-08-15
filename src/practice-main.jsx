@@ -11,5 +11,5 @@ createRoot(document.getElementById('root')).render(
     <FF8Provider>
       <PracticeApp />
     </FF8Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
